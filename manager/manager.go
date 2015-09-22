@@ -4,6 +4,7 @@ import (
 	"github.com/samalba/dockerclient"
 	"log"
 	"os"
+	"time"
 )
 
 type Container struct {
@@ -21,31 +22,31 @@ var (
 
 // Initialize the docker connection
 func Init() {
-
 	tlsConfig, err :=  getTLSConfig(os.Getenv("SWARM_CREDS_DIR"))
 	if err != nil {
 		log.Fatal("Could not create TLS certificate.")
 	}
-
+	// Setup the docker host
 	docker, err = dockerclient.NewDockerClient(os.Getenv("DOCKER_HOST"), tlsConfig)
-
 	if err != nil {
 		log.Fatal("Error initializing docker: ", err)
 	}
 	log.Println("Swarm connection inialized")
-
 	initialized = true
 }
 
 // Start a container
-func (c *Container) Start() {
+func (c *Container) Start(status chan string) {
 
 	if !initialized {
 			log.Fatal("Package not initialized.  Call .Init() function.")
 	}
 
-  log.Println("Starting container based on ", c.Image)
+	status <- "STARTING"
 
+	c.Hostname = generateHostName("ANIMAL")
+
+  log.Println("Starting container based on ", c.Image)
   // Create the container
 	containerConfig := &dockerclient.ContainerConfig{
 		Image: c.Image,
@@ -53,7 +54,7 @@ func (c *Container) Start() {
 		ExposedPorts: map[string]struct{}{
 			"8888/tcp": {},
 		},
-		Hostname: generateHostName("ANIMAL"),
+		Hostname: c.Hostname,
 		Domainname: c.Domainname,
 	}
 
@@ -76,25 +77,41 @@ func (c *Container) Start() {
 
 	log.Println("Started container ", containerConfig.Hostname)
 
+	status <- "DONE"
+
 }
 
 // Kill a container
-func (c *Container) Kill() {
+func (c *Container) Kill(status chan string) {
+
+	status <- "STARTING"
 
 	if !initialized {
 			log.Fatal("Package not initialized.  Call .Init() function.")
 	}
 
-  log.Println("Stopping container ", c.ContainerId)
+  log.Println("Stopping container ", c.Hostname)
+
   err := docker.StopContainer(c.ContainerId, 5)
   if err != nil {
-    log.Println("Could not kill container", c.ContainerId)
+    log.Println("Could not kill container", c.Hostname)
   }
-	log.Println("Removing container ", c.ContainerId)
-  docker.RemoveContainer(c.ContainerId, true, true)
-  if err != nil {
-    log.Println("Could not remove container ", c.ContainerId)
-  }
-	log.Println("Removed container ", c.ContainerId)
 
+	log.Println("Removing container ", c.Hostname)
+  docker.RemoveContainer(c.Hostname, true, true)
+  if err != nil {
+    log.Println("Could not remove container ", c.Hostname)
+  }
+
+	status <- "DONE"
+
+	log.Println("Removed container ", c.Hostname)
+
+}
+
+
+func (c *Container) NoOp(status chan string) {
+	status <- "WORKING"
+	time.Sleep(3 * time.Second)
+	status <- "DONE"
 }
