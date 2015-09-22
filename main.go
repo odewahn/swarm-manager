@@ -6,6 +6,7 @@ import (
   "github.com/samalba/dockerclient"
   "log"
   "os"
+  "github.com/odewahn/swarm-manager/container"
 )
 
 func main() {
@@ -27,12 +28,16 @@ func main() {
   }
 
   fmt.Println("Starting!")
-  c := &Containers{
-    Client: *docker,
+
+  container.Init(docker)
+
+  c := &container.Container{
     Hostname: "whoa-daddy",
     Image: "ipython/scipystack",
     Domainname: os.Getenv("THEBE_SERVER_BASE_URL"),
   }
-  c.Start()
+  go c.Start()
+  var input string
+  fmt.Scanln(&input)
   fmt.Println(c.ContainerId)
 }

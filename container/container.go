@@ -1,12 +1,11 @@
-package main
+package container
 
 import (
 	"github.com/samalba/dockerclient"
   "log"
 )
 
-type Containers struct {
-  Client dockerclient.DockerClient
+type Container struct {
   Hostname string `json:"hostname"`
   Domainname string `json:"domainname"`
   Image string `json:"image"`
@@ -14,8 +13,15 @@ type Containers struct {
   ContainerId string
 }
 
+var (
+	docker *dockerclient.DockerClient
+)
 
-func (c *Containers) Start() (error) {
+func Init(d *dockerclient.DockerClient) {
+	docker = d
+}
+
+func (c *Container) Start() {
   log.Println("Starting container based on ", c.Image)
 
   // Create the container
@@ -29,7 +35,7 @@ func (c *Containers) Start() (error) {
 		Domainname: c.Domainname,
 	}
 
-	containerId, err := c.Client.CreateContainer(containerConfig, c.Hostname)
+	containerId, err := docker.CreateContainer(containerConfig, c.Hostname)
 	if err != nil {
 		log.Println(err)
 	}
@@ -40,22 +46,24 @@ func (c *Containers) Start() (error) {
 	hostConfig := &dockerclient.HostConfig{
 		PublishAllPorts: true,
 	}
-	err = c.Client.StartContainer(containerId, hostConfig)
+
+	err = docker.StartContainer(containerId, hostConfig)
 	if err != nil {
 		log.Println(err)
 	}
-	return err
+
+	log.Println("Started container ", c.ContainerId)
+
 }
 
-
-func (c *Containers) Kill() {
+func (c *Container) Kill() {
 
   log.Printf("Killing container ", c.ContainerId)
-  err := c.Client.StopContainer(c.ContainerId, 5)
+  err := docker.StopContainer(c.ContainerId, 5)
   if err != nil {
     log.Printf("Could not kill container %s", c.ContainerId)
   }
-  c.Client.RemoveContainer(c.ContainerId,true,true)
+  docker.RemoveContainer(c.ContainerId,true,true)
   if err != nil {
     log.Printf("Could not remove container ", c.ContainerId)
   }
