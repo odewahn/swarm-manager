@@ -1,11 +1,7 @@
-package container
+package manager
 
 import (
 	"github.com/samalba/dockerclient"
-	"crypto/tls"
-	"crypto/x509"
-	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 )
@@ -23,45 +19,21 @@ var (
 	initialized bool
 )
 
-
-// Reads the specified file into a byte array
-func fetchFile(path, fn string) ([]byte, error) {
-	fileName := fmt.Sprintf("%s/%s", path, fn)
-	out, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		log.Fatalf("error loading %s : %s", fn, err)
-	}
-	return out, err
-}
-
-// Loads and returns a tls config settings for the swarm.  Lightly adapted version of:
-//     https://github.com/ehazlett/interlock/blob/master/interlock/main.go#L14-L32
-func GetTLSConfig(certsDir string) (*tls.Config, error) {
-	// TLS config
-	var tlsConfig tls.Config
-
-	caCert, err := fetchFile(certsDir, os.Getenv("SWARM_CA"))
-	cert, err := fetchFile(certsDir, os.Getenv("SWARM_CERT"))
-	key, err := fetchFile(certsDir, os.Getenv("SWARM_KEY"))
-
-	tlsConfig.InsecureSkipVerify = true
-	certPool := x509.NewCertPool()
-
-	certPool.AppendCertsFromPEM(caCert)
-	tlsConfig.RootCAs = certPool
-	keypair, err := tls.X509KeyPair(cert, key)
-	if err != nil {
-		return &tlsConfig, err
-	}
-	tlsConfig.Certificates = []tls.Certificate{keypair}
-
-	return &tlsConfig, nil
-}
-
-
 // Initialize the docker connection
-func Init(d *dockerclient.DockerClient) {
-	docker = d
+func Init() {
+
+	tlsConfig, err :=  getTLSConfig(os.Getenv("SWARM_CREDS_DIR"))
+	if err != nil {
+		log.Fatal("Could not create TLS certificate.")
+	}
+
+	docker, err = dockerclient.NewDockerClient(os.Getenv("DOCKER_HOST"), tlsConfig)
+
+	if err != nil {
+		log.Fatal("Error initializing docker: ", err)
+	}
+	log.Println("Swarm connection inialized")
+
 	initialized = true
 }
 
@@ -81,11 +53,11 @@ func (c *Container) Start() {
 		ExposedPorts: map[string]struct{}{
 			"8888/tcp": {},
 		},
-		Hostname:   c.Hostname,
+		Hostname: generateHostName("ANIMAL"),
 		Domainname: c.Domainname,
 	}
 
-	containerId, err := docker.CreateContainer(containerConfig, c.Hostname)
+	containerId, err := docker.CreateContainer(containerConfig, containerConfig.Hostname)
 	if err != nil {
 		log.Println(err)
 	}
@@ -102,7 +74,7 @@ func (c *Container) Start() {
 		log.Println(err)
 	}
 
-	log.Println("Started container ", c.ContainerId)
+	log.Println("Started container ", containerConfig.Hostname)
 
 }
 

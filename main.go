@@ -1,13 +1,12 @@
 package main
 
 import (
-  "fmt"
+  "github.com/odewahn/swarm-manager/manager"
   "github.com/joho/godotenv"
-  "github.com/samalba/dockerclient"
-  "log"
-  "os"
-  "github.com/odewahn/swarm-manager/container"
+  "fmt"
   "time"
+  "os"
+  "log"
 )
 
 func main() {
@@ -18,32 +17,18 @@ func main() {
     log.Fatal("Error loading .env file")
   }
 
-  tlsConfig, err := container.GetTLSConfig(os.Getenv("SWARM_CREDS_DIR"))
-  if err != nil {
-    log.Fatal("Could not create TLS certificate.")
-  }
+  manager.Init()
 
-  docker, err := dockerclient.NewDockerClient(os.Getenv("DOCKER_HOST"), tlsConfig)
-  if err != nil {
-    log.Fatal("Error initializing docker: ", err)
-  }
-
-  fmt.Println("Starting ", docker)
-
-  //container.Init(docker)
-
-  c := &container.Container{
-    Hostname: "whoa-daddy",
+  m := &manager.Container{
     Image: "ipython/scipystack",
     Domainname: os.Getenv("THEBE_SERVER_BASE_URL"),
-    ContainerId: "6e1111899edafd3b5d50486e59317ede3ea21da272c978ec834251fdb21a010b",
+    ContainerId: "suspicious_emu_5",
   }
-  go c.Start()
-  var input string
+
+  go m.Kill()
+
   for {
     fmt.Print(".")
     time.Sleep(500 * time.Millisecond)
   }
-  fmt.Scanln(&input)
-  fmt.Println(c.ContainerId)
 }
