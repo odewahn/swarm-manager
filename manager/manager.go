@@ -13,6 +13,7 @@ type Container struct {
   Image string `json:"image"`
   Url string `json:"url"`
   ContainerId string
+	Status string
 }
 
 var (
