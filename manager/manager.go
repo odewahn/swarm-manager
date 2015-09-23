@@ -5,13 +5,15 @@ import (
 	"log"
 	"os"
 	"time"
+	"crypto/rand"
+	"encoding/json"
+	"fmt"
 )
 
 type Container struct {
   Hostname string `json:"hostname"`
   Domainname string `json:"domainname"`
   Image string `json:"image"`
-  Url string `json:"url"`
   ContainerId string
 	Status string
 }
@@ -20,6 +22,27 @@ var (
 	docker *dockerclient.DockerClient
 	initialized bool
 )
+
+// Serializes a container as a string
+func (c *Container) Serialize() (string) {
+	out, err := json.Marshal(c)
+	if err != nil {
+		log.Println(err)
+	}
+	return string(out)
+}
+
+// From https://www.socketloop.com/tutorials/golang-how-to-generate-random-string
+func getHostName() string {
+	dictionary := "0123456789abcdefghijklmnopqrstuvwxyz"
+	var bytes = make([]byte, 12)
+	rand.Read(bytes)
+	for k, v := range bytes {
+		bytes[k] = dictionary[v%byte(len(dictionary))]
+	}
+	return string(bytes)
+}
+
 
 // Initialize the docker connection
 func Init() {
@@ -37,15 +60,13 @@ func Init() {
 }
 
 // Start a container
-func (c *Container) Start(status chan string) {
+func (c *Container) Start() {
 
 	if !initialized {
 			log.Fatal("Package not initialized.  Call .Init() function.")
 	}
 
-	status <- "STARTING"
-
-	c.Hostname = generateHostName("ANIMAL")
+	c.Hostname = getHostName()
 
   log.Println("Starting container based on ", c.Image)
   // Create the container
@@ -78,20 +99,16 @@ func (c *Container) Start(status chan string) {
 
 	log.Println("Started container ", containerConfig.Hostname)
 
-	status <- "DONE"
+	c.Status = "ACTIVE"
 
 }
 
 // Kill a container
-func (c *Container) Kill(status chan string) {
-
-	status <- "STARTING"
+func (c *Container) Kill() {
 
 	if !initialized {
 			log.Fatal("Package not initialized.  Call .Init() function.")
 	}
-
-  log.Println("Stopping container ", c.Hostname)
 
   err := docker.StopContainer(c.ContainerId, 5)
   if err != nil {
@@ -104,15 +121,16 @@ func (c *Container) Kill(status chan string) {
     log.Println("Could not remove container ", c.Hostname)
   }
 
-	status <- "DONE"
-
 	log.Println("Removed container ", c.Hostname)
 
+	c.Status = "DELETED"
 }
 
 
-func (c *Container) NoOp(status chan string) {
-	status <- "WORKING"
+func (c *Container) NoOp() {
+	fmt.Println(c.Serialize())
 	time.Sleep(3 * time.Second)
-	status <- "DONE"
+  c.Status = "READY"
+	fmt.Println(c.Serialize())
+
 }

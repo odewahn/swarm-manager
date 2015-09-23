@@ -27,7 +27,6 @@ func main() {
 
   manager.Init()
 
-  status := make(chan string)
 
   m := &manager.Container{
     Image: "ipython/scipystack",
@@ -35,27 +34,22 @@ func main() {
   }
 
   if *Action == "START" {
-    go m.Start(status)
+    go m.Start()
   }
 
   if *Action == "NOOP" {
     fmt.Println("doing a noop")
-    go m.NoOp(status)
+    go m.NoOp()
   }
 
   if *Action == "KILL" {
     m.Hostname = *Hostname
-    go m.Kill(status)
+    go m.Kill()
   }
 
   for {
-    select {
-    case msg := <-status:
-      fmt.Println("Status is ", msg, " for hostname ", m)
-    default:
-      fmt.Print(".")
-      time.Sleep(500*time.Millisecond)
-    }
+    fmt.Print(".")
+    time.Sleep(500*time.Millisecond)
   }
 
 }
