@@ -6,31 +6,15 @@ import (
 	"os"
 	"time"
 	"crypto/rand"
-	"encoding/json"
 	"fmt"
+	"github.com/odewahn/swarm-manager/models"
+	"github.com/odewahn/swarm-manager/db"
 )
-
-type Container struct {
-  Hostname string `json:"hostname"`
-  Domainname string `json:"domainname"`
-  Image string `json:"image"`
-  ContainerId string
-	Status string
-}
 
 var (
 	docker *dockerclient.DockerClient
 	initialized bool
 )
-
-// Serializes a container as a string
-func (c *Container) Serialize() (string) {
-	out, err := json.Marshal(c)
-	if err != nil {
-		log.Println(err)
-	}
-	return string(out)
-}
 
 // From https://www.socketloop.com/tutorials/golang-how-to-generate-random-string
 func getHostName() string {
@@ -42,7 +26,6 @@ func getHostName() string {
 	}
 	return string(bytes)
 }
-
 
 // Initialize the docker connection
 func Init() {
@@ -60,15 +43,13 @@ func Init() {
 }
 
 // Start a container
-func (c *Container) Start() {
-
+func Start(c *models.Container) {
 	if !initialized {
 			log.Fatal("Package not initialized.  Call .Init() function.")
 	}
-
 	c.Hostname = getHostName()
-
   log.Println("Starting container based on ", c.Image)
+	db.SaveContainer(c)	//Save startup state in the db
   // Create the container
 	containerConfig := &dockerclient.ContainerConfig{
 		Image: c.Image,
@@ -79,58 +60,55 @@ func (c *Container) Start() {
 		Hostname: c.Hostname,
 		Domainname: c.Domainname,
 	}
-
 	containerId, err := docker.CreateContainer(containerConfig, containerConfig.Hostname)
 	if err != nil {
 		log.Println(err)
 	}
-
   c.ContainerId = containerId
-
 	// Start the container
 	hostConfig := &dockerclient.HostConfig{
 		PublishAllPorts: true,
 	}
-
 	err = docker.StartContainer(containerId, hostConfig)
 	if err != nil {
 		log.Println(err)
 	}
-
 	log.Println("Started container ", containerConfig.Hostname)
-
 	c.Status = "ACTIVE"
+	db.SaveContainer(c)	//Save state in the db
+
 
 }
 
 // Kill a container
-func (c *Container) Kill() {
-
+func Kill(c *models.Container) {
 	if !initialized {
 			log.Fatal("Package not initialized.  Call .Init() function.")
 	}
-
+	c.Status = "DELETING"
+	db.SaveContainer(c)	//Save startup state in the db
   err := docker.StopContainer(c.ContainerId, 5)
   if err != nil {
     log.Println("Could not kill container", c.Hostname)
   }
-
 	log.Println("Removing container ", c.Hostname)
   docker.RemoveContainer(c.Hostname, true, true)
   if err != nil {
     log.Println("Could not remove container ", c.Hostname)
   }
-
 	log.Println("Removed container ", c.Hostname)
+	c.Status = "REMOVED"
+	db.SaveContainer(c)	//Save startup state in the db
 
-	c.Status = "DELETED"
 }
 
 
-func (c *Container) NoOp() {
+func NoOp(c *models.Container) {
+	c.Hostname = getHostName()
 	fmt.Println(c.Serialize())
-	time.Sleep(3 * time.Second)
+	db.SaveContainer(c)
+	time.Sleep(20 * time.Second)
   c.Status = "READY"
+	db.SaveContainer(c)
 	fmt.Println(c.Serialize())
-
 }

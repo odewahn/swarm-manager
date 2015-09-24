@@ -1,6 +1,8 @@
 package main
 
 import (
+  "github.com/odewahn/swarm-manager/models"
+  "github.com/odewahn/swarm-manager/db"
   "github.com/odewahn/swarm-manager/manager"
   "github.com/joho/godotenv"
   "os"
@@ -26,25 +28,26 @@ func main() {
   flag.Parse()
 
   manager.Init()
+  db.Init()
 
 
-  m := &manager.Container{
+  m := &models.Container{
     Image: "ipython/scipystack",
     Domainname: os.Getenv("THEBE_SERVER_BASE_URL"),
   }
 
   if *Action == "START" {
-    go m.Start()
+    go manager.Start(m)
   }
 
   if *Action == "NOOP" {
     fmt.Println("doing a noop")
-    go m.NoOp()
+    go manager.NoOp(m)
   }
 
   if *Action == "KILL" {
     m.Hostname = *Hostname
-    go m.Kill()
+    go manager.Kill(m)
   }
 
   for {
