@@ -61,5 +61,4 @@ func GetContainer (k string) (models.Container) {
     log.Println(err)
   }
   return models.DeserializeContainer(s)
-
 }

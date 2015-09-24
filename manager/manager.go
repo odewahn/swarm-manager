@@ -43,13 +43,15 @@ func Init() {
 }
 
 // Start a container
-func Start(c *models.Container) {
+func Start(c *models.Container, status chan string) {
 	if !initialized {
 			log.Fatal("Package not initialized.  Call .Init() function.")
 	}
 	c.Hostname = getHostName()
   log.Println("Starting container based on ", c.Image)
 	db.SaveContainer(c)	//Save startup state in the db
+	status <- c.Hostname //tell the caller that the record is ready to be read
+
   // Create the container
 	containerConfig := &dockerclient.ContainerConfig{
 		Image: c.Image,
@@ -75,18 +77,22 @@ func Start(c *models.Container) {
 	}
 	log.Println("Started container ", containerConfig.Hostname)
 	c.Status = "ACTIVE"
+
+	time.Sleep(10*time.Second)
+
 	db.SaveContainer(c)	//Save state in the db
 
 
 }
 
 // Kill a container
-func Kill(c *models.Container) {
+func Kill(c *models.Container, status chan string) {
 	if !initialized {
 			log.Fatal("Package not initialized.  Call .Init() function.")
 	}
 	c.Status = "DELETING"
 	db.SaveContainer(c)	//Save startup state in the db
+	status <- c.Status
   err := docker.StopContainer(c.ContainerId, 5)
   if err != nil {
     log.Println("Could not kill container", c.Hostname)
@@ -103,11 +109,12 @@ func Kill(c *models.Container) {
 }
 
 
-func NoOp(c *models.Container) {
+func NoOp(c *models.Container, status chan string) {
 	c.Hostname = getHostName()
+	status <- c.Hostname
 	fmt.Println(c.Serialize())
 	db.SaveContainer(c)
-	time.Sleep(20 * time.Second)
+	time.Sleep(5 * time.Second)
   c.Status = "READY"
 	db.SaveContainer(c)
 	fmt.Println(c.Serialize())

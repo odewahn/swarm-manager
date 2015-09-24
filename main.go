@@ -1,20 +1,18 @@
 package main
 
 import (
-  "github.com/odewahn/swarm-manager/models"
-  "github.com/odewahn/swarm-manager/db"
   "github.com/odewahn/swarm-manager/manager"
+  "github.com/odewahn/swarm-manager/db"
   "github.com/joho/godotenv"
-  "os"
   "log"
   "flag"
   "fmt"
-  "time"
+  "net/http"
+  "github.com/gorilla/mux"
 )
 
 var (
-  Action = flag.String("action", "START", "Action (START | KILL | NOOP)")
-  Hostname = flag.String("hostname", "", "Hostname to kill")
+  HTTPAddr = flag.String("http", "127.0.0.1:3000", "Address to listen for HTTP requests on")
 )
 
 func main() {
@@ -30,29 +28,17 @@ func main() {
   manager.Init()
   db.Init()
 
+  mux := mux.NewRouter()
 
-  m := &models.Container{
-    Image: "ipython/scipystack",
-    Domainname: os.Getenv("THEBE_SERVER_BASE_URL"),
-  }
+  mux.HandleFunc("/spawn", Spawn).Methods("GET")
+  mux.HandleFunc("/container/{hostname}", ListContainer).Methods("GET")
+  mux.HandleFunc("/container/{hostname}/kill", KillContainer).Methods("GET")
 
-  if *Action == "START" {
-    go manager.Start(m)
-  }
+  // Start the HTTP server!
+   fmt.Println("HTTP server listening on", *HTTPAddr)
+   if err := http.ListenAndServe(*HTTPAddr, mux); err != nil {
+     fmt.Println(err.Error())
+   }
 
-  if *Action == "NOOP" {
-    fmt.Println("doing a noop")
-    go manager.NoOp(m)
-  }
-
-  if *Action == "KILL" {
-    m.Hostname = *Hostname
-    go manager.Kill(m)
-  }
-
-  for {
-    fmt.Print(".")
-    time.Sleep(500*time.Millisecond)
-  }
 
 }
