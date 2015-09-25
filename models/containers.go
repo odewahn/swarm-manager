@@ -3,6 +3,7 @@ package models
 import (
   "encoding/json"
   "log"
+  "time"
 )
 
 type Container struct {
@@ -12,6 +13,8 @@ type Container struct {
   Url string `json:"url"`
   ContainerId string
 	Status string
+  StartTime time.Time
+  Owner string
 }
 
 // Serializes a container as a string

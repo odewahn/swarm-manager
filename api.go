@@ -72,6 +72,12 @@ func ManageContainers(w http.ResponseWriter, r *http.Request) {
                {{.Status}}
             </td>
             <td>
+               {{.StartTime}}
+            </td>
+            <td>
+               {{.Owner}}
+            </td>
+            <td>
                <a href="/container/{{.Hostname}}/kill">Kill</a>
             </td>
           </tr>
