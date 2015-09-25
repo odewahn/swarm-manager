@@ -8,12 +8,12 @@ import (
   "net/http"
   "os"
   "github.com/gorilla/mux"
-
+  "html/template"
 )
 
 
 // curl -X POST 127.0.0.1:8000/spawn
-func Spawn(w http.ResponseWriter, r *http.Request) {
+func Launch(w http.ResponseWriter, r *http.Request) {
   // Make sure we can only be called with an HTTP POST request.
   /*
   if r.Method != "POST" {
@@ -56,4 +56,28 @@ func KillContainer(w http.ResponseWriter, r *http.Request) {
   go manager.Kill(&c, status)
   <-status  // block until the status updates
   fmt.Fprintln(w, c.Serialize())
+}
+
+func ManageContainers(w http.ResponseWriter, r *http.Request) {
+  containers := db.GetContainers()
+  t, _ := template.New("index").Parse(`
+   <html>
+      <table>
+        {{ range .}}
+         <tr>
+            <td>
+               <a target=_blank href="http://{{.Url}}">{{.Url}}</a>
+            </td>
+            <td>
+               {{.Status}}
+            </td>
+            <td>
+               <a href="/container/{{.Hostname}}/kill">Kill</a>
+            </td>
+          </tr>
+         {{end}}
+      </table>
+  </html>
+  `)
+  t.Execute(w, containers)
 }

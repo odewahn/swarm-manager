@@ -44,10 +44,12 @@ func Init() {
 
 // Start a container
 func Start(c *models.Container, status chan string) {
+
 	if !initialized {
 			log.Fatal("Package not initialized.  Call .Init() function.")
 	}
-	c.Hostname = getHostName()
+
+	c.Hostname = getHostName() //Get a random name to use as a hostname
 	c.Url = fmt.Sprintf("%s.%s", c.Hostname, c.Domainname )
 	db.SaveContainer(c)	//Save startup state in the db
 	status <- c.Hostname //Signal the caller that the record is ready to be read
@@ -61,7 +63,7 @@ func Start(c *models.Container, status chan string) {
 		Hostname: c.Hostname,
 		Domainname: c.Domainname,
 	}
-	containerId, err := docker.CreateContainer(containerConfig, containerConfig.Hostname)
+	containerId, err := docker.CreateContainer(containerConfig, c.Hostname)
 	if err != nil {
 		log.Println(err)
 	}

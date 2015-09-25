@@ -62,3 +62,17 @@ func GetContainer (k string) (models.Container) {
   }
   return models.DeserializeContainer(s)
 }
+
+
+func GetContainers() []models.Container {
+  if !initialized {
+    log.Fatal("Data model is not initialized!  Call model.Init() before using this function.")
+  }
+  var out []models.Container
+  hostnames, _ := redisClient.HKeys("containers").Result()
+  for _, h := range hostnames {
+     c := GetContainer(h)
+     out = append(out,c)
+  }
+  return out
+}

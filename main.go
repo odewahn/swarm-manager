@@ -30,9 +30,11 @@ func main() {
 
   mux := mux.NewRouter()
 
-  mux.HandleFunc("/spawn", Spawn).Methods("GET")
+  mux.HandleFunc("/launch", Launch).Methods("GET")
   mux.HandleFunc("/container/{hostname}", ListContainer).Methods("GET")
   mux.HandleFunc("/container/{hostname}/kill", KillContainer).Methods("GET")
+  mux.HandleFunc("/containers", ManageContainers).Methods("GET")
+
 
   // Start the HTTP server!
    fmt.Println("HTTP server listening on", *HTTPAddr)
