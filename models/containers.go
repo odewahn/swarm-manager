@@ -9,6 +9,7 @@ type Container struct {
   Hostname string `json:"hostname"`
   Domainname string `json:"domainname"`
   Image string `json:"image"`
+  Url string `json:"url"`
   ContainerId string
 	Status string
 }

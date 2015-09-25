@@ -48,10 +48,9 @@ func Start(c *models.Container, status chan string) {
 			log.Fatal("Package not initialized.  Call .Init() function.")
 	}
 	c.Hostname = getHostName()
-  log.Println("Starting container based on ", c.Image)
+	c.Url = fmt.Sprintf("%s.%s", c.Hostname, c.Domainname )
 	db.SaveContainer(c)	//Save startup state in the db
-	status <- c.Hostname //tell the caller that the record is ready to be read
-
+	status <- c.Hostname //Signal the caller that the record is ready to be read
   // Create the container
 	containerConfig := &dockerclient.ContainerConfig{
 		Image: c.Image,
@@ -75,12 +74,10 @@ func Start(c *models.Container, status chan string) {
 	if err != nil {
 		log.Println(err)
 	}
-	log.Println("Started container ", containerConfig.Hostname)
 	c.Status = "ACTIVE"
 
-	time.Sleep(10*time.Second)
-
 	db.SaveContainer(c)	//Save state in the db
+	log.Println("Started container ", c.Serialize())
 
 
 }
@@ -97,14 +94,13 @@ func Kill(c *models.Container, status chan string) {
   if err != nil {
     log.Println("Could not kill container", c.Hostname)
   }
-	log.Println("Removing container ", c.Hostname)
   docker.RemoveContainer(c.Hostname, true, true)
   if err != nil {
     log.Println("Could not remove container ", c.Hostname)
   }
-	log.Println("Removed container ", c.Hostname)
 	c.Status = "REMOVED"
 	db.SaveContainer(c)	//Save startup state in the db
+	log.Println("Removed container ", c.Serialize())
 
 }
 
