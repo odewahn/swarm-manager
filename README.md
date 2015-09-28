@@ -1,15 +1,17 @@
-# Swarm manager
-Manage kernels on a Rackspace Swarm
+# Jupyter Kernel Manager for Rackspace Swarm
 
+This is a simple API for starting and stopping containers running Jupyter on the Rackspace swarm.
 
 ## Start interlock on the cluster
 
 Use the following command to start Interlock on the swarm:
 
 ```
-DOCKER run -d \
+docker run -d \
    --name interlock \
    -p 80:80 \
+   -P \
+   --hostname i2.odewahn.com \
    --volumes-from swarm-data \
    ehazlett/interlock \
    --swarm-url $DOCKER_HOST \
@@ -114,7 +116,7 @@ $ curl http://swarm-manager.i2.odewahn.com/container/ki60dje40khk/kill
 ### See all containers
 
 ```
-$ curl http://localhost:3000/containers
+$ curl http://swarm-manager.i2.odewahn.com/containers
 [
   {
     "hostname": "80vgjpwxeg3u",

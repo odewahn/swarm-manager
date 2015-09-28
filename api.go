@@ -75,6 +75,14 @@ func ManageContainers(w http.ResponseWriter, r *http.Request) {
   containers := db.GetContainers()
   t, _ := template.New("index").Parse(`
    <html>
+      <h1>Swarm Manager</h1>
+      <h2>Launch a container</h2>
+      <form action="spawn" method="POST">
+         Image: <input type="text" name="image" value="ipython/scipystack"/><br>
+         User: <input type="text" name="user" value="odewahn"/><br>
+         <input type="submit"/>
+      </form>
+      <h2>Current Containers</h2>
       <table>
         {{ range .}}
          <tr>
