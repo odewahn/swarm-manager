@@ -14,7 +14,7 @@ type Container struct {
   ContainerId string
 	Status string
   StartTime time.Time
-  Owner string
+  User string
 }
 
 // Serializes a container as a string

@@ -12,7 +12,7 @@ import (
 )
 
 var (
-  HTTPAddr = flag.String("http", "127.0.0.1:3000", "Address to listen for HTTP requests on")
+  HTTPAddr = flag.String("http", "0.0.0.0:3000", "Address to listen for HTTP requests on")
 )
 
 func main() {
@@ -30,11 +30,10 @@ func main() {
 
   mux := mux.NewRouter()
 
-  mux.HandleFunc("/launch", Launch).Methods("GET")
+  mux.HandleFunc("/spawn", Spawn).Methods("POST")
   mux.HandleFunc("/container/{hostname}", ListContainer).Methods("GET")
   mux.HandleFunc("/container/{hostname}/kill", KillContainer).Methods("GET")
   mux.HandleFunc("/containers", ManageContainers).Methods("GET")
-
 
   // Start the HTTP server!
    fmt.Println("HTTP server listening on", *HTTPAddr)

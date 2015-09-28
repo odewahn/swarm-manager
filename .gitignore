@@ -1,2 +1,4 @@
 .env
+.env.prod
 .DS_Store
+swarm-manager

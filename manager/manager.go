@@ -51,7 +51,6 @@ func Start(c *models.Container, status chan string) {
 
 	c.Hostname = getHostName() //Get a random name to use as a hostname
 	c.Url = fmt.Sprintf("%s.%s", c.Hostname, c.Domainname )
-	c.Owner = "odewahn"
 	c.StartTime = time.Now()
 
 	db.SaveContainer(c)	//Save startup state in the db

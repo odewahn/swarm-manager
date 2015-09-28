@@ -11,20 +11,25 @@ import (
   "html/template"
 )
 
+type SpawnRequest struct {
+  Image string
+}
 
-// curl -X POST 127.0.0.1:8000/spawn
-func Launch(w http.ResponseWriter, r *http.Request) {
-  // Make sure we can only be called with an HTTP POST request.
-  /*
-  if r.Method != "POST" {
-    w.Header().Set("Allow", "POST")
-    w.WriteHeader(http.StatusMethodNotAllowed)
-    return
+func Spawn(w http.ResponseWriter, r *http.Request) {
+  r.ParseForm()
+  image := r.FormValue("image")
+  if len(image) == 0 {
+    image = "ipython/scipystack"
   }
-  */
+
+  user := r.FormValue("user")
+  if len(user) == 0 {
+    user = "odewahn"
+  }
 
   m := &models.Container{
-    Image: "ipython/scipystack",
+    Image: image,
+    User: user,
     Domainname: os.Getenv("THEBE_SERVER_BASE_URL"),
   }
 
@@ -45,7 +50,6 @@ func ListContainer(w http.ResponseWriter, r *http.Request) {
   c := db.GetContainer(hostname)
   fmt.Fprintln(w, c.Serialize())
 }
-
 
 
 func KillContainer(w http.ResponseWriter, r *http.Request) {
@@ -69,13 +73,16 @@ func ManageContainers(w http.ResponseWriter, r *http.Request) {
                <a target=_blank href="http://{{.Url}}">{{.Url}}</a>
             </td>
             <td>
+               {{.Image}}
+            </td>
+            <td>
+               {{.User}}
+            </td>
+            <td>
                {{.Status}}
             </td>
             <td>
                {{.StartTime}}
-            </td>
-            <td>
-               {{.Owner}}
             </td>
             <td>
                <a href="/container/{{.Hostname}}/kill">Kill</a>
