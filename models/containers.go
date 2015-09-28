@@ -11,15 +11,15 @@ type Container struct {
   Domainname string `json:"domainname"`
   Image string `json:"image"`
   Url string `json:"url"`
-  ContainerId string
-	Status string
-  StartTime time.Time
-  User string
+  ContainerId string `json:"container_id"`
+	Status string `json:"status"`
+  StartTime time.Time `json:"start_time"`
+  User string `json:"user"`
 }
 
 // Serializes a container as a string
 func (c *Container) Serialize() (string) {
-	out, err := json.Marshal(c)
+	out, err := json.MarshalIndent(c,"","  ")
 	if err != nil {
 		log.Println(err)
 	}

@@ -9,6 +9,8 @@ import (
   "os"
   "github.com/gorilla/mux"
   "html/template"
+  "encoding/json"
+  "log"
 )
 
 type SpawnRequest struct {
@@ -38,10 +40,9 @@ func Spawn(w http.ResponseWriter, r *http.Request) {
 
   <-status //block until we get a message back that the status record is ready
 
-  fmt.Fprintf(w, m.Serialize())
+  fmt.Fprintf(w, m.Serialize()+"\n")
 
 }
-
 
 
 func ListContainer(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +52,6 @@ func ListContainer(w http.ResponseWriter, r *http.Request) {
   fmt.Fprintln(w, c.Serialize())
 }
 
-
 func KillContainer(w http.ResponseWriter, r *http.Request) {
   vars := mux.Vars(r)
   hostname := vars["hostname"]
@@ -60,6 +60,15 @@ func KillContainer(w http.ResponseWriter, r *http.Request) {
   go manager.Kill(&c, status)
   <-status  // block until the status updates
   fmt.Fprintln(w, c.Serialize())
+}
+
+func ListContainers(w http.ResponseWriter, r *http.Request) {
+  containers := db.GetContainers()
+  out, err := json.MarshalIndent(containers,"","  ")
+  if err != nil {
+    log.Println(err)
+  }
+  fmt.Fprintf(w, string(out)+"\n")
 }
 
 func ManageContainers(w http.ResponseWriter, r *http.Request) {
