@@ -72,6 +72,7 @@ func ListContainers(w http.ResponseWriter, r *http.Request) {
 }
 
 func Stats(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("got here")
 	fmt.Fprintf(w, "{}\n")
 }
 

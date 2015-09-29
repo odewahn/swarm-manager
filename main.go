@@ -29,6 +29,14 @@ func use(h http.HandlerFunc, middleware ...func(http.HandlerFunc) http.HandlerFu
 }
 
 // Leverages nemo's answer in http://stackoverflow.com/a/21937924/556573
+func cors(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		h.ServeHTTP(w, r)
+	}
+}
+
+// Leverages nemo's answer in http://stackoverflow.com/a/21937924/556573
 func basicAuth(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -82,8 +90,8 @@ func main() {
 
 	mux := mux.NewRouter()
 
-	mux.HandleFunc("/spawn", use(Spawn, basicAuth)).Methods("POST")
-	http.Handle("/spawn", mux)
+	mux.HandleFunc("/api/spawn/", use(Spawn, cors)).Methods("POST")
+	http.Handle("/api/spawn/", mux)
 
 	mux.HandleFunc("/container/{hostname}", use(ListContainer, basicAuth)).Methods("GET")
 	http.Handle("/container/{hostname}", mux)
@@ -97,7 +105,7 @@ func main() {
 	mux.HandleFunc("/manage", use(ManageContainers, basicAuth)).Methods("GET")
 	http.Handle("/manage", mux)
 
-	mux.HandleFunc("/api/stats", use(Stats, basicAuth)).Methods("GET")
+	mux.HandleFunc("/api/stats", use(Stats, cors)).Methods("GET")
 	http.Handle("/api/stats", mux)
 
 	// Start the HTTP server!
