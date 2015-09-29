@@ -1,23 +1,23 @@
 package main
 
 import (
-  "github.com/odewahn/swarm-manager/manager"
-  "github.com/odewahn/swarm-manager/db"
-  "github.com/joho/godotenv"
-  "log"
-  "flag"
-  "fmt"
-  "net/http"
-  "github.com/gorilla/mux"
-  "encoding/base64"
-  "strings"
-  "os"
+	"encoding/base64"
+	"flag"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+
+	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
+	"github.com/odewahn/swarm-manager/db"
+	"github.com/odewahn/swarm-manager/manager"
 )
 
 var (
-  HTTPAddr = flag.String("http", "0.0.0.0:3000", "Address to listen for HTTP requests on")
+	HTTPAddr = flag.String("http", "0.0.0.0:3000", "Address to listen for HTTP requests on")
 )
-
 
 // The following 2 functions are used to do basic auth and come from
 //   https://gist.github.com/elithrar/9146306
@@ -33,6 +33,7 @@ func basicAuth(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 
 		s := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 		if len(s) != 2 {
@@ -57,55 +58,52 @@ func basicAuth(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-    if pair[1] != os.Getenv("PASSWORD") {
-      http.Error(w, "Not authorized", 401)
-      return
-    }
+		if pair[1] != os.Getenv("PASSWORD") {
+			http.Error(w, "Not authorized", 401)
+			return
+		}
 
 		h.ServeHTTP(w, r)
 	}
 }
 
-
-
 func main() {
 
-  // Load the environment variables we need
-  err := godotenv.Load()
-  if err != nil {
-    log.Fatal("Error loading .env file")
-  }
+	// Load the environment variables we need
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
-  flag.Parse()
+	flag.Parse()
 
-  manager.Init()
-  db.Init()
+	manager.Init()
+	db.Init()
 
-  mux := mux.NewRouter()
+	mux := mux.NewRouter()
 
-  mux.HandleFunc("/spawn", use(Spawn, basicAuth)).Methods("POST")
-  http.Handle("/spawn", mux)
+	mux.HandleFunc("/spawn", use(Spawn, basicAuth)).Methods("POST")
+	http.Handle("/spawn", mux)
 
-  mux.HandleFunc("/container/{hostname}", use(ListContainer, basicAuth)).Methods("GET")
-  http.Handle("/container/{hostname}", mux)
+	mux.HandleFunc("/container/{hostname}", use(ListContainer, basicAuth)).Methods("GET")
+	http.Handle("/container/{hostname}", mux)
 
+	mux.HandleFunc("/container/{hostname}/kill", use(KillContainer, basicAuth)).Methods("GET")
+	http.Handle("/container/{hostname}/kill", mux)
 
-  mux.HandleFunc("/container/{hostname}/kill", use(KillContainer, basicAuth)).Methods("GET")
-  http.Handle("/container/{hostname}/kill", mux)
+	mux.HandleFunc("/containers", use(ListContainers, basicAuth)).Methods("GET")
+	http.Handle("/containers", mux)
 
+	mux.HandleFunc("/manage", use(ManageContainers, basicAuth)).Methods("GET")
+	http.Handle("/manage", mux)
 
-  mux.HandleFunc("/containers", use(ListContainers, basicAuth)).Methods("GET")
-  http.Handle("/containers", mux)
+	mux.HandleFunc("/api/stats", use(Stats, basicAuth)).Methods("GET")
+	http.Handle("/api/stats", mux)
 
-
-  mux.HandleFunc("/manage", use(ManageContainers, basicAuth)).Methods("GET")
-  http.Handle("/manage", mux)
-
-  // Start the HTTP server!
-   fmt.Println("HTTP server listening on", *HTTPAddr)
-   if err := http.ListenAndServe(*HTTPAddr, mux); err != nil {
-     fmt.Println(err.Error())
-   }
-
+	// Start the HTTP server!
+	fmt.Println("HTTP server listening on", *HTTPAddr)
+	if err := http.ListenAndServe(*HTTPAddr, mux); err != nil {
+		fmt.Println(err.Error())
+	}
 
 }
