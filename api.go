@@ -22,7 +22,7 @@ func Spawn(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	image := r.FormValue("image")
 	if len(image) == 0 {
-		image = "ipython/scipystack"
+		image = "zischwartz/notebook"
 	}
 
 	user := r.FormValue("user")
@@ -82,14 +82,15 @@ func ManageContainers(w http.ResponseWriter, r *http.Request) {
    <html>
       <h1>Swarm Manager</h1>
       <h2>Launch a container</h2>
-      <form action="spawn" method="POST">
+      <form action="/api/spawn/" method="POST">
          Image: <input type="text" name="image" value="ipython/scipystack"/><br>
          User: <input type="text" name="user" value="odewahn"/><br>
          <input type="submit"/>
       </form>
-      <h2>Current Containers</h2>
+      <h2>Active Containers</h2>
       <table>
         {{ range .}}
+				{{ if .IsActive }}
          <tr>
             <td>
                <a target=_blank href="http://{{.Url}}">{{.Url}}</a>
@@ -101,15 +102,13 @@ func ManageContainers(w http.ResponseWriter, r *http.Request) {
                {{.User}}
             </td>
             <td>
-               {{.Status}}
-            </td>
-            <td>
                {{.StartTime}}
             </td>
             <td>
-               <a href="/container/{{.Hostname}}/kill">Kill</a>
+               <a href="/api/container/{{.Hostname}}/kill">Kill</a>
             </td>
           </tr>
+					{{ end }}
          {{end}}
       </table>
   </html>

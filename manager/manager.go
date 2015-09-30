@@ -1,18 +1,19 @@
 package manager
 
 import (
-	"github.com/samalba/dockerclient"
+	"crypto/rand"
+	"fmt"
 	"log"
 	"os"
 	"time"
-	"crypto/rand"
-	"fmt"
-	"github.com/odewahn/swarm-manager/models"
+
 	"github.com/odewahn/swarm-manager/db"
+	"github.com/odewahn/swarm-manager/models"
+	"github.com/samalba/dockerclient"
 )
 
 var (
-	docker *dockerclient.DockerClient
+	docker      *dockerclient.DockerClient
 	initialized bool
 )
 
@@ -29,7 +30,7 @@ func getHostName() string {
 
 // Initialize the docker connection
 func Init() {
-	tlsConfig, err :=  getTLSConfig(os.Getenv("SWARM_CREDS_DIR"))
+	tlsConfig, err := getTLSConfig(os.Getenv("SWARM_CREDS_DIR"))
 	if err != nil {
 		log.Fatal("Could not create TLS certificate.")
 	}
@@ -46,30 +47,30 @@ func Init() {
 func Start(c *models.Container, status chan string) {
 
 	if !initialized {
-			log.Fatal("Package not initialized.  Call .Init() function.")
+		log.Fatal("Package not initialized.  Call .Init() function.")
 	}
 
 	c.Hostname = getHostName() //Get a random name to use as a hostname
-	c.Url = fmt.Sprintf("%s.%s", c.Hostname, c.Domainname )
+	c.Url = fmt.Sprintf("http://%s.%s", c.Hostname, c.Domainname)
 	c.StartTime = time.Now()
 
-	db.SaveContainer(c)	//Save startup state in the db
+	db.SaveContainer(c)  //Save startup state in the db
 	status <- c.Hostname //Signal the caller that the record is ready to be read
-  // Create the container
+	// Create the container
 	containerConfig := &dockerclient.ContainerConfig{
 		Image: c.Image,
 		Cmd:   []string{"/bin/sh", "-c", "ipython notebook --ip=0.0.0.0 --no-browser"},
 		ExposedPorts: map[string]struct{}{
 			"8888/tcp": {},
 		},
-		Hostname: c.Hostname,
+		Hostname:   c.Hostname,
 		Domainname: c.Domainname,
 	}
 	containerId, err := docker.CreateContainer(containerConfig, c.Hostname)
 	if err != nil {
 		log.Println(err)
 	}
-  c.ContainerId = containerId
+	c.ContainerId = containerId
 	// Start the container
 	hostConfig := &dockerclient.HostConfig{
 		PublishAllPorts: true,
@@ -80,34 +81,32 @@ func Start(c *models.Container, status chan string) {
 	}
 	c.Status = "ACTIVE"
 
-	db.SaveContainer(c)	//Save state in the db
+	db.SaveContainer(c) //Save state in the db
 	log.Println("Started container ", c.Serialize())
-
 
 }
 
 // Kill a container
 func Kill(c *models.Container, status chan string) {
 	if !initialized {
-			log.Fatal("Package not initialized.  Call .Init() function.")
+		log.Fatal("Package not initialized.  Call .Init() function.")
 	}
 	c.Status = "DELETING"
-	db.SaveContainer(c)	//Save startup state in the db
+	db.SaveContainer(c) //Save startup state in the db
 	status <- c.Status
-  err := docker.StopContainer(c.ContainerId, 5)
-  if err != nil {
-    log.Println("Could not kill container", c.Hostname)
-  }
-  docker.RemoveContainer(c.Hostname, true, true)
-  if err != nil {
-    log.Println("Could not remove container ", c.Hostname)
-  }
+	err := docker.StopContainer(c.ContainerId, 5)
+	if err != nil {
+		log.Println("Could not kill container", c.Hostname)
+	}
+	docker.RemoveContainer(c.Hostname, true, true)
+	if err != nil {
+		log.Println("Could not remove container ", c.Hostname)
+	}
 	c.Status = "REMOVED"
-	db.SaveContainer(c)	//Save startup state in the db
+	db.SaveContainer(c) //Save startup state in the db
 	log.Println("Removed container ", c.Serialize())
 
 }
-
 
 func NoOp(c *models.Container, status chan string) {
 	c.Hostname = getHostName()
@@ -115,7 +114,7 @@ func NoOp(c *models.Container, status chan string) {
 	fmt.Println(c.Serialize())
 	db.SaveContainer(c)
 	time.Sleep(5 * time.Second)
-  c.Status = "READY"
+	c.Status = "READY"
 	db.SaveContainer(c)
 	fmt.Println(c.Serialize())
 }

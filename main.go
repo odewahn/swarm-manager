@@ -93,16 +93,16 @@ func main() {
 	mux.HandleFunc("/api/spawn/", use(Spawn, cors)).Methods("POST")
 	http.Handle("/api/spawn/", mux)
 
-	mux.HandleFunc("/container/{hostname}", use(ListContainer, basicAuth)).Methods("GET")
-	http.Handle("/container/{hostname}", mux)
+	mux.HandleFunc("/api/container/{hostname}", use(ListContainer, cors)).Methods("GET")
+	http.Handle("/api/container/{hostname}", mux)
 
-	mux.HandleFunc("/container/{hostname}/kill", use(KillContainer, basicAuth)).Methods("GET")
-	http.Handle("/container/{hostname}/kill", mux)
+	mux.HandleFunc("/api/container/{hostname}/kill", use(KillContainer, cors)).Methods("GET")
+	http.Handle("/api/container/{hostname}/kill", mux)
 
-	mux.HandleFunc("/containers", use(ListContainers, basicAuth)).Methods("GET")
-	http.Handle("/containers", mux)
+	mux.HandleFunc("/api/containers", use(ListContainers, cors)).Methods("GET")
+	http.Handle("/api/containers", mux)
 
-	mux.HandleFunc("/manage", use(ManageContainers, basicAuth)).Methods("GET")
+	mux.HandleFunc("/manage", use(ManageContainers, cors)).Methods("GET")
 	http.Handle("/manage", mux)
 
 	mux.HandleFunc("/api/stats", use(Stats, cors)).Methods("GET")
