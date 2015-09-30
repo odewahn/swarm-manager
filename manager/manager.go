@@ -59,7 +59,7 @@ func Start(c *models.Container, status chan string) {
 	// Create the container
 	containerConfig := &dockerclient.ContainerConfig{
 		Image: c.Image,
-		Cmd:   []string{"/bin/sh", "-c", "ipython notebook --ip=0.0.0.0 --no-browser"},
+		Cmd:   []string{"/bin/sh", "-c", "jupyter notebook --no-browser --port 8888 --ip=* --NotebookApp.allow_origin=*"},
 		ExposedPorts: map[string]struct{}{
 			"8888/tcp": {},
 		},
