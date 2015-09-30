@@ -19,7 +19,7 @@ type Container struct {
 
 func (c *Container) IsActive() bool {
 	out := false
-	if c.Status == "ACTIVE" {
+	if c.Status == "ACTIVE" || c.Status == "ERROR" {
 		out = true
 	}
 	return out
