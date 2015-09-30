@@ -56,7 +56,6 @@ func kernelStarted(c *models.Container) bool {
 			log.Println(err)
 		}
 		defer res.Body.Close()
-		fmt.Println(res.StatusCode)
 		if res.StatusCode == 200 {
 			running = true
 		}
