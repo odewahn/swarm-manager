@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+  <title>Thebe Demo</title>
+  <link rel="stylesheet" href="assets/thebe.css" type="text/css"/>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <script src="https://rawgit.com/oreillymedia/thebe/master/static/main-built.js" type="text/javascript" charset="utf-8"></script>
+</head>
+<body>
+  <pre data-executable='true'>
+%matplotlib inline
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from IPython.html.widgets import interact
+
+@interact
+def explore(n=10):
+    x = np.linspace(0, n, 1000)
+    plt.plot(x, np.sin(x), x, np.cos(x));
+    sns.set()
+    plt.plot(x, np.sin(x), x, np.cos(x));
+	</pre>
+
+  <div class="about">
+    <h3>About</h3>
+    <p>
+      The code runs <a href="http://jupyter.org">Jupyter</a> kernels inside of Docker containers,
+      <a href="https://github.com/jupyter/tmpnb">through a temporary notebook system</a>.
+      The frontend exposed here is <a href="https://github.com/oreillymedia/thebe">O'Reilly Media's Thebe</a>.
+    </p>
+    <p>
+      There is no network access and operations are limited. If you find a bug, <a href="https://github.com/rgbkrk/jupyter-environments-talk/issues">report it</a>. Change the code to your hearts content.
+    </p>
+    <p>Hosting for the kernels is provided by <a href="https://developer.rackspace.com">developer.rackspace.com</a>.
+    <h4>Want to share code? Try <a href="https://lambdaops.com/share-cell">Share Cell</a>.</h4>
+  </div>
+
+	<script>
+	$(function(){
+	  new Thebe({url:"http://swarm-manager.i2.odewahn.com", kernel_name: "python3"});
+	});
+	</script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-37362544-1', 'auto');
+    ga('send', 'pageview');
+
+  </script>
+</body>
+</html>
