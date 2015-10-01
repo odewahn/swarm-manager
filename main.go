@@ -31,7 +31,11 @@ func use(h http.HandlerFunc, middleware ...func(http.HandlerFunc) http.HandlerFu
 // Leverages nemo's answer in http://stackoverflow.com/a/21937924/556573
 func cors(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
 		h.ServeHTTP(w, r)
 	}
 }
@@ -89,8 +93,9 @@ func main() {
 	db.Init()
 
 	mux := mux.NewRouter()
-
-	mux.HandleFunc("/api/spawn/", use(Spawn, cors)).Methods("POST")
+	// mux.Headers("Content-Type", "application/json")
+	// mux.Headers("Access-Control-Allow-Headers", "origin, content-type, accept")
+	mux.HandleFunc("/api/spawn/", use(Spawn, cors)).Methods("POST", "OPTIONS")
 	http.Handle("/api/spawn/", mux)
 
 	mux.HandleFunc("/api/container/{hostname}", use(ListContainer, cors)).Methods("GET")
