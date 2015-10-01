@@ -100,6 +100,9 @@ func ManageContainers(w http.ResponseWriter, r *http.Request) {
             <td>
                {{.User}}
             </td>
+						<td>
+               {{.Status}}
+            </td>
             <td>
                {{.StartTime}}
             </td>

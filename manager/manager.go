@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -43,6 +44,31 @@ func Init() {
 	initialized = true
 }
 
+// test kernel status and return true if the kernel has started
+func kernelStarted(c *models.Container) bool {
+	running := false
+	url := c.Url
+	idx := 0
+	cont := true
+	for cont {
+		res, err := http.Get(url)
+		if err != nil {
+			log.Println(err)
+		}
+		defer res.Body.Close()
+		if res.StatusCode == 200 {
+			running = true
+		}
+		idx++
+		if (idx > 10) || (res.StatusCode == 200) {
+			cont = false
+		} else {
+			time.Sleep(2 * time.Second)
+		}
+	}
+	return running
+}
+
 // Start a container
 func Start(c *models.Container, status chan string) {
 
@@ -59,7 +85,7 @@ func Start(c *models.Container, status chan string) {
 	// Create the container
 	containerConfig := &dockerclient.ContainerConfig{
 		Image: c.Image,
-		Cmd:   []string{"/bin/sh", "-c", "jupyter notebook --no-browser --port 8888 --ip=* --NotebookApp.allow_origin=*"},
+		Cmd:   []string{"/bin/sh", "-c", "ipython notebook --no-browser --port 8888 --ip=* --NotebookApp.allow_origin=*"},
 		ExposedPorts: map[string]struct{}{
 			"8888/tcp": {},
 		},
@@ -79,7 +105,14 @@ func Start(c *models.Container, status chan string) {
 	if err != nil {
 		log.Println(err)
 	}
-	c.Status = "ACTIVE"
+
+	ks := kernelStarted(c)
+
+	if ks {
+		c.Status = "ACTIVE"
+	} else {
+		c.Status = "ERROR"
+	}
 
 	db.SaveContainer(c) //Save state in the db
 	log.Println("Started container ", c.Serialize())

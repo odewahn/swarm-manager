@@ -39,7 +39,10 @@ def explore(n=10):
 
 	<script>
 	$(function(){
-	  new Thebe({url:"http://swarm-manager.i2.odewahn.com", kernel_name: "python3"});
+	  window.thebe = new Thebe({
+      url:"http://swarm-manager.i2.odewahn.com",
+      debug: true,
+      kernel_name: "python3"});
 	});
 	</script>
   <script>
