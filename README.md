@@ -11,7 +11,7 @@ docker run -d \
    --name interlock \
    -p 80:80 \
    -P \
-   --hostname i2.odewahn.com \
+   --hostname i3.odewahn.com \
    --volumes-from swarm-data \
    ehazlett/interlock \
    --swarm-url $DOCKER_HOST \
